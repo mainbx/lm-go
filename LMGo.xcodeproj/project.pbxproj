@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -12,12 +12,18 @@
 		1397EB754F3133537519572E /* ServerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00E694F51F57EB40A1C9FD6B /* ServerViewModel.swift */; };
 		28575DD098372B57D882BBC8 /* ServerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D443EEF0AC656FB8AC2BEBF /* ServerSetupView.swift */; };
 		3D809C8F41C0DDA40065F7A1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0C063956C2BBACF6BC0839C /* Theme.swift */; };
+		479C0A09693BAB4CA1D806C6 /* LocalModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32C2453483B9004B2ACD6BD /* LocalModel.swift */; };
 		5E7A4AF9E503E988FBD8CF44 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = F64A7CD91BD3E78B8EFA8056 /* Message.swift */; };
 		6A17041C299EEF1F1E27B132 /* ConversationListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFF5AB11978FEF420E560EC /* ConversationListView.swift */; };
 		6C3BA5FB5DFB91B866FCC0D9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8554C4BB6DEFE245BA46F14F /* Assets.xcassets */; };
+		6D000ED7CD6D4ACF09815F9A /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 9D8F55BC15E2759402B05525 /* MLXLMCommon */; };
+		735A72799F0A8F220C852E30 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = F2139085FB7797A5F1306635 /* MLXLLM */; };
 		83AACCFDEDAE31B065258CCD /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE148E0CF45F4A7816D695CA /* ChatView.swift */; };
 		84BF88F9D8127E1F70233832 /* PersistenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A9E79F1A7529BAC6395EC46 /* PersistenceService.swift */; };
 		A0A0979C8B5FD6D20E78CDFB /* ServerConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DC63AB87750514BCE75384A /* ServerConfig.swift */; };
+		A15E00A2E065079C96D29000 /* HuggingFaceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B61BF618154D0AE857F16A2 /* HuggingFaceService.swift */; };
+		A2E252C7D90BA09A2679ACEA /* LocalMLXInferenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8626F03FD2814FC3B763013 /* LocalMLXInferenceService.swift */; };
+		A48F44F5F8CC8973A68F99CA /* SwiftLlama in Frameworks */ = {isa = PBXBuildFile; productRef = 98B236E74C404760E0BA70CA /* SwiftLlama */; };
 		AF58CCEE6453CF4AA7B33712 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F7BA2C37B67B4CEF8E2699 /* MessageBubble.swift */; };
 		B245D0DAFEB13FE2D5496100 /* ConversationsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 421A9864AEDB25A5FCD68B96 /* ConversationsViewModel.swift */; };
 		B7E7CE33D033BF980EF8A273 /* LMModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2C6E919DF960B737F4546F2 /* LMModel.swift */; };
@@ -28,14 +34,17 @@
 		DF46444222169B4274513166 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E9663043FF8896EFD527D4 /* ContentView.swift */; };
 		E09DD7A1029C18306745CBCE /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAB9C161145FB6616ADB550B /* Conversation.swift */; };
 		E5E01C84F47802305E59954F /* StreamingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF90136EA113B5673ED9AEDC /* StreamingService.swift */; };
+		FAA23002D5320067B7EED2EB /* LocalInferenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 064B7A89CEEF9EFB6FF6A982 /* LocalInferenceService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		00E694F51F57EB40A1C9FD6B /* ServerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerViewModel.swift; sourceTree = "<group>"; };
+		064B7A89CEEF9EFB6FF6A982 /* LocalInferenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalInferenceService.swift; sourceTree = "<group>"; };
 		0C243BD1BE3F5701C0DD9E00 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
-		1A259B2181C64758BF395DD5 /* LMGo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LMGo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1A259B2181C64758BF395DD5 /* LMGo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LMGo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		23B248030CA6515A22C62580 /* ModelPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPickerView.swift; sourceTree = "<group>"; };
 		28E9663043FF8896EFD527D4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		3B61BF618154D0AE857F16A2 /* HuggingFaceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuggingFaceService.swift; sourceTree = "<group>"; };
 		421A9864AEDB25A5FCD68B96 /* ConversationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationsViewModel.swift; sourceTree = "<group>"; };
 		42C7903A5ABC52E5938EE198 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		42F7BA2C37B67B4CEF8E2699 /* MessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubble.swift; sourceTree = "<group>"; };
@@ -45,6 +54,7 @@
 		5DC63AB87750514BCE75384A /* ServerConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConfig.swift; sourceTree = "<group>"; };
 		8554C4BB6DEFE245BA46F14F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		94185CA52B59D312CD4C1CD4 /* LMGoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMGoApp.swift; sourceTree = "<group>"; };
+		A32C2453483B9004B2ACD6BD /* LocalModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalModel.swift; sourceTree = "<group>"; };
 		AE148E0CF45F4A7816D695CA /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		B72AD22F5E43F0DC4438752B /* ChatInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatInputView.swift; sourceTree = "<group>"; };
 		BAFF5AB11978FEF420E560EC /* ConversationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationListView.swift; sourceTree = "<group>"; };
@@ -52,9 +62,23 @@
 		DF90136EA113B5673ED9AEDC /* StreamingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingService.swift; sourceTree = "<group>"; };
 		E2C6E919DF960B737F4546F2 /* LMModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMModel.swift; sourceTree = "<group>"; };
 		E43E54DB979CAB93462140A3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		E8626F03FD2814FC3B763013 /* LocalMLXInferenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMLXInferenceService.swift; sourceTree = "<group>"; };
 		F0C063956C2BBACF6BC0839C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		F64A7CD91BD3E78B8EFA8056 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BA888F7A0889C52590BBAA24 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A48F44F5F8CC8973A68F99CA /* SwiftLlama in Frameworks */,
+				735A72799F0A8F220C852E30 /* MLXLLM in Frameworks */,
+				6D000ED7CD6D4ACF09815F9A /* MLXLMCommon in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		15C54CDD3554B1415544B914 /* LMGo */ = {
@@ -103,6 +127,7 @@
 			children = (
 				CAB9C161145FB6616ADB550B /* Conversation.swift */,
 				E2C6E919DF960B737F4546F2 /* LMModel.swift */,
+				A32C2453483B9004B2ACD6BD /* LocalModel.swift */,
 				F64A7CD91BD3E78B8EFA8056 /* Message.swift */,
 				5DC63AB87750514BCE75384A /* ServerConfig.swift */,
 			);
@@ -142,6 +167,9 @@
 			isa = PBXGroup;
 			children = (
 				0C243BD1BE3F5701C0DD9E00 /* APIService.swift */,
+				3B61BF618154D0AE857F16A2 /* HuggingFaceService.swift */,
+				064B7A89CEEF9EFB6FF6A982 /* LocalInferenceService.swift */,
+				E8626F03FD2814FC3B763013 /* LocalMLXInferenceService.swift */,
 				5A9E79F1A7529BAC6395EC46 /* PersistenceService.swift */,
 				DF90136EA113B5673ED9AEDC /* StreamingService.swift */,
 			);
@@ -175,6 +203,7 @@
 			buildPhases = (
 				FDE753AF280AB079705056B0 /* Sources */,
 				7215257A807C7B3F617B16FC /* Resources */,
+				BA888F7A0889C52590BBAA24 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -182,6 +211,9 @@
 			);
 			name = LMGo;
 			packageProductDependencies = (
+				98B236E74C404760E0BA70CA /* SwiftLlama */,
+				F2139085FB7797A5F1306635 /* MLXLLM */,
+				9D8F55BC15E2759402B05525 /* MLXLMCommon */,
 			);
 			productName = LMGo;
 			productReference = 1A259B2181C64758BF395DD5 /* LMGo.app */;
@@ -195,6 +227,12 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 2630;
+				TargetAttributes = {
+					4998E63E89222CFF9B60E8E9 = {
+						DevelopmentTeam = T5QZSL7TD7;
+						ProvisioningStyle = Automatic;
+					};
+				};
 			};
 			buildConfigurationList = 834BBFD76B133013CCFB027E /* Build configuration list for PBXProject "LMGo" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -206,6 +244,11 @@
 			);
 			mainGroup = 175173C988281232D99EB2D6;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				63FFE5DE8EEED5D194FC3385 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
+				E3FFB7834DE4C6D7E751597A /* XCRemoteSwiftPackageReference "swift-llama-cpp" */,
+			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -238,8 +281,12 @@
 				E09DD7A1029C18306745CBCE /* Conversation.swift in Sources */,
 				6A17041C299EEF1F1E27B132 /* ConversationListView.swift in Sources */,
 				B245D0DAFEB13FE2D5496100 /* ConversationsViewModel.swift in Sources */,
+				A15E00A2E065079C96D29000 /* HuggingFaceService.swift in Sources */,
 				BF9F4E0D71D9338C36CC7F8C /* LMGoApp.swift in Sources */,
 				B7E7CE33D033BF980EF8A273 /* LMModel.swift in Sources */,
+				FAA23002D5320067B7EED2EB /* LocalInferenceService.swift in Sources */,
+				A2E252C7D90BA09A2679ACEA /* LocalMLXInferenceService.swift in Sources */,
+				479C0A09693BAB4CA1D806C6 /* LocalModel.swift in Sources */,
 				5E7A4AF9E503E988FBD8CF44 /* Message.swift in Sources */,
 				AF58CCEE6453CF4AA7B33712 /* MessageBubble.swift in Sources */,
 				C58514F9D52CBF5AE6A2351D /* ModelPickerView.swift in Sources */,
@@ -403,7 +450,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = T5QZSL7TD7;
 				INFOPLIST_FILE = LMGo/Info.plist;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "LM Go needs local network access to connect to your LLM server";
@@ -422,7 +471,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = T5QZSL7TD7;
 				INFOPLIST_FILE = LMGo/Info.plist;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "LM Go needs local network access to connect to your LLM server";
@@ -459,6 +510,43 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		63FFE5DE8EEED5D194FC3385 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.30.6;
+			};
+		};
+		E3FFB7834DE4C6D7E751597A /* XCRemoteSwiftPackageReference "swift-llama-cpp" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pgorzelany/swift-llama-cpp";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		98B236E74C404760E0BA70CA /* SwiftLlama */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E3FFB7834DE4C6D7E751597A /* XCRemoteSwiftPackageReference "swift-llama-cpp" */;
+			productName = SwiftLlama;
+		};
+		9D8F55BC15E2759402B05525 /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 63FFE5DE8EEED5D194FC3385 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLMCommon;
+		};
+		F2139085FB7797A5F1306635 /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 63FFE5DE8EEED5D194FC3385 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLLM;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 39FAE38E0C814C881D74C7DB /* Project object */;
 }

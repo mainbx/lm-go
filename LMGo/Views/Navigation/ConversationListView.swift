@@ -95,16 +95,24 @@ struct ConversationListView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(serverVM.activeServer?.name ?? "No Server")
+                Text(serverVM.isSelectedModelLocal ? "On Device" : (serverVM.activeServer?.name ?? "No Server"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(LMTheme.textPrimary)
 
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(serverVM.isConnected ? LMTheme.success : LMTheme.error)
+                        .fill(
+                            serverVM.isSelectedModelLocal
+                                ? (serverVM.isSelectedLocalModelLoaded ? LMTheme.success : LMTheme.warning)
+                                : (serverVM.isConnected ? LMTheme.success : LMTheme.error)
+                        )
                         .frame(width: 7, height: 7)
 
-                    Text(serverVM.isConnected ? (serverVM.activeServer?.displayURL ?? "") : "Disconnected")
+                    Text(
+                        serverVM.isSelectedModelLocal
+                            ? "On-device local model"
+                            : (serverVM.isConnected ? (serverVM.activeServer?.displayURL ?? "") : "Disconnected")
+                    )
                         .font(.caption)
                         .foregroundStyle(LMTheme.textTertiary)
                         .lineLimit(1)

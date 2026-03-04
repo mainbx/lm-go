@@ -5,10 +5,24 @@ struct SettingsView: View {
     @ObservedObject var serverVM: ServerViewModel
     @Environment(\.dismiss) private var dismiss
 
+    private static let huggingFaceDateParserWithFractionalSeconds: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    private static let huggingFaceDateParser: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
     @State private var showAddServer = false
     @State private var editingServer: ServerConfig?
     @State private var revealContent = false
     @State private var embeddingInput = ""
+    @State private var huggingFaceRepoId = ""
+    @State private var huggingFaceSearchQuery = ""
 
     var body: some View {
         NavigationStack {
@@ -17,6 +31,7 @@ struct SettingsView: View {
                     serversSection
                     activeServerSection
                     modelsSection
+                    localModelsSection
                     embeddingsSection
                     aboutSection
                 }
@@ -60,6 +75,13 @@ struct SettingsView: View {
             .onAppear {
                 withAnimation(.easeOut(duration: 0.24)) {
                     revealContent = true
+                }
+
+                if huggingFaceRepoId.isEmpty {
+                    huggingFaceRepoId = "mlx-community/Qwen3.5-4B-MLX-4bit"
+                }
+                if huggingFaceSearchQuery.isEmpty {
+                    huggingFaceSearchQuery = "qwen 3.5 mlx"
                 }
 
                 if serverVM.isConnected {
@@ -523,6 +545,360 @@ struct SettingsView: View {
         return tokens
     }
 
+    // MARK: - On-Device Models
+
+    private var localModelsSection: some View {
+        VStack(alignment: .leading, spacing: LMTheme.paddingMD) {
+            sectionHeader("On-Device LLMs")
+
+            VStack(alignment: .leading, spacing: LMTheme.paddingMD) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Search Hugging Face")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(LMTheme.textTertiary)
+
+                    TextField("qwen 3.5 mlx", text: $huggingFaceSearchQuery)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(LMTheme.surfaceSecondary.opacity(0.82))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(LMTheme.borderLight, lineWidth: 1)
+                        )
+                        .onSubmit {
+                            Task {
+                                await serverVM.searchHuggingFaceRepositories(query: huggingFaceSearchQuery)
+                            }
+                        }
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        Task {
+                            await serverVM.searchHuggingFaceRepositories(query: huggingFaceSearchQuery)
+                        }
+                    } label: {
+                        HStack {
+                            Spacer()
+                            if serverVM.isSearchingHuggingFaceRepos {
+                                ProgressView()
+                                    .tint(LMTheme.accent)
+                                    .scaleEffect(0.8)
+                            } else {
+                                Label("Search Repositories", systemImage: "magnifyingglass")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(LMTheme.accent)
+                            }
+                            Spacer()
+                        }
+                        .padding(.vertical, 10)
+                        .background(LMTheme.accentMuted)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(
+                        huggingFaceSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            || serverVM.isSearchingHuggingFaceRepos
+                    )
+
+                    if !serverVM.huggingFaceSearchResults.isEmpty {
+                        Button {
+                            serverVM.clearHuggingFaceSearchResults()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(LMTheme.textSecondary)
+                                .frame(width: 34, height: 34)
+                                .background(LMTheme.surfaceSecondary.opacity(0.84))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .stroke(LMTheme.border, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                if !serverVM.huggingFaceSearchResults.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Repository Results")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(LMTheme.textTertiary)
+
+                        ForEach(serverVM.huggingFaceSearchResults) { result in
+                            huggingFaceRepoSearchRow(result)
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Selected MLX Model ID")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(LMTheme.textTertiary)
+
+                    TextField("owner/repo", text: $huggingFaceRepoId)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(LMTheme.surfaceSecondary.opacity(0.82))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(LMTheme.borderLight, lineWidth: 1)
+                        )
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Hugging Face Token (optional)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(LMTheme.textTertiary)
+
+                    SecureField(
+                        "hf_...",
+                        text: Binding(
+                            get: { serverVM.huggingFaceToken },
+                            set: { serverVM.updateHuggingFaceToken($0) }
+                        )
+                    )
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(LMTheme.surfaceSecondary.opacity(0.82))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(LMTheme.borderLight, lineWidth: 1)
+                    )
+                }
+
+                Button {
+                    serverVM.addLocalMLXModel(repoId: huggingFaceRepoId)
+                } label: {
+                    HStack {
+                        Spacer()
+                        Label("Add MLX Model", systemImage: "plus")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(LMTheme.accent)
+                        Spacer()
+                    }
+                    .padding(.vertical, 10)
+                    .background(LMTheme.accentMuted)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(huggingFaceRepoId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                if !serverVM.localModels.isEmpty {
+                    Rectangle()
+                        .fill(LMTheme.border)
+                        .frame(height: 1)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Configured On Device")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(LMTheme.textTertiary)
+
+                        ForEach(serverVM.localModels) { model in
+                            localDownloadedModelRow(model)
+                        }
+                    }
+                } else {
+                    Text("No local models configured yet.")
+                        .font(.subheadline)
+                        .foregroundStyle(LMTheme.textSecondary)
+                }
+            }
+            .padding(LMTheme.paddingLG)
+            .glassCard(padding: 0, cornerRadius: 16)
+
+            if let error = serverVM.localModelsError {
+                sectionErrorBanner(message: error) {
+                    serverVM.clearLocalModelsError()
+                }
+            }
+        }
+    }
+
+    private func huggingFaceRepoSearchRow(_ result: HuggingFaceRepoSearchResult) -> some View {
+        let selectedRepoId = huggingFaceRepoId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let isSelectedRepo = selectedRepoId.caseInsensitiveCompare(result.repoId) == .orderedSame
+
+        return HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(result.repoId)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(LMTheme.textPrimary)
+                    .lineLimit(1)
+
+                let metadata = huggingFaceRepoMetadata(result)
+                if !metadata.isEmpty {
+                    Text(metadata)
+                        .font(.caption)
+                        .foregroundStyle(LMTheme.textTertiary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                huggingFaceRepoId = result.repoId
+            } label: {
+                Text(isSelectedRepo ? "Selected" : "Use")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(LMTheme.accent)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(LMTheme.accentMuted)
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(LMTheme.surfaceSecondary.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(isSelectedRepo ? LMTheme.accent.opacity(0.45) : LMTheme.borderLight, lineWidth: 1)
+        )
+    }
+
+    private func huggingFaceRepoMetadata(_ result: HuggingFaceRepoSearchResult) -> String {
+        var parts: [String] = []
+
+        if let count = result.matchingArtifactCount {
+            parts.append("\(count) files")
+        }
+        if result.isLikelyMLX {
+            parts.append("MLX")
+        }
+        if let downloads = result.downloads {
+            parts.append("\(downloads.formatted(.number.notation(.compactName))) downloads")
+        }
+        if let likes = result.likes {
+            parts.append("\(likes.formatted(.number.notation(.compactName))) likes")
+        }
+        if let lastModified = huggingFaceLastModifiedLabel(result.lastModified) {
+            parts.append("updated \(lastModified)")
+        }
+
+        return parts.joined(separator: " • ")
+    }
+
+    private func huggingFaceLastModifiedLabel(_ rawValue: String?) -> String? {
+        guard let rawValue, !rawValue.isEmpty else { return nil }
+        if let date = SettingsView.huggingFaceDateParserWithFractionalSeconds.date(from: rawValue)
+            ?? SettingsView.huggingFaceDateParser.date(from: rawValue) {
+            return date.formatted(.dateTime.year().month(.abbreviated).day())
+        }
+        return String(rawValue.prefix(10))
+    }
+
+    private func localDownloadedModelRow(_ model: LocalModelRecord) -> some View {
+        let lmModel = LMModel(id: model.modelIdentifier, object: "model", ownedBy: "On Device")
+        let isSelected = serverVM.selectedModel?.id == lmModel.id
+        let isBusy = serverVM.isLoadingLocalModel
+
+        return HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(model.displayName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(LMTheme.textPrimary)
+                    .lineLimit(1)
+
+                HStack(spacing: 6) {
+                    Text(model.repoId)
+                        .font(.caption)
+                        .foregroundStyle(LMTheme.textTertiary)
+                        .lineLimit(1)
+
+                    Text("• \(model.backend.displayName)")
+                        .font(.caption)
+                        .foregroundStyle(LMTheme.textTertiary)
+
+                    if let size = model.fileSizeBytes {
+                        Text("• \(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))")
+                            .font(.caption)
+                            .foregroundStyle(LMTheme.textTertiary)
+                    }
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            if model.isLoaded {
+                Text("Loaded")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(LMTheme.success)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(LMTheme.success.opacity(0.15))
+                    .clipShape(Capsule())
+            }
+
+            Button {
+                Task {
+                    if model.isLoaded {
+                        await serverVM.unloadLocalModel()
+                    } else {
+                        await serverVM.loadLocalModel(model)
+                    }
+                }
+            } label: {
+                Group {
+                    if isBusy {
+                        ProgressView()
+                            .tint(LMTheme.accent)
+                            .scaleEffect(0.8)
+                    } else {
+                        Text(model.isLoaded ? "Unload" : "Load")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(model.isLoaded ? LMTheme.warning : LMTheme.accent)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background((model.isLoaded ? LMTheme.warning : LMTheme.accent).opacity(0.16))
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(isBusy)
+
+            Button {
+                serverVM.selectModel(lmModel)
+            } label: {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20))
+                    .foregroundStyle(isSelected ? LMTheme.accent : LMTheme.textTertiary)
+            }
+            .buttonStyle(.plain)
+
+            Button(role: .destructive) {
+                serverVM.deleteLocalModel(model)
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(LMTheme.error)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(LMTheme.surfaceSecondary.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(LMTheme.borderLight, lineWidth: 1)
+        )
+    }
+
     // MARK: - Embeddings
 
     private var embeddingsSection: some View {
@@ -688,7 +1064,7 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 infoRow(icon: "info.circle", title: "Version", value: "1.0.0")
                 infoDivider
-                infoRow(icon: "arrow.left.arrow.right", title: "Protocol", value: "OpenAI + LM Studio REST")
+                infoRow(icon: "arrow.left.arrow.right", title: "Protocol", value: "OpenAI + LM Studio + Local MLX/GGUF")
             }
             .glassCard(padding: 0, cornerRadius: 16)
         }

@@ -8,22 +8,22 @@ LM Go is a SwiftUI iOS chat client for LM Studio and other OpenAI-compatible loc
 - Streaming chat via Server-Sent Events (SSE).
 - `<think>...</think>` reasoning parsing with a compact "Thinking..." preview banner.
 - Automatic continuation when a streamed response is truncated (token/length finish reasons).
-- Runtime model controls from Settings:
-  - Load model
-  - Unload model
-- Runtime model controls in top chat model picker:
-  - Load model
-  - Unload model
-  - Select loaded model for active chat
+- Runtime model controls from Settings and model picker (`load`, `unload`, `select loaded`).
 - Embeddings tool in Settings for quick text-to-vector testing.
+- On-device local MLX support:
+  - Hugging Face repository search
+  - Add model by `owner/repo`
+  - Load/unload and chat inference on device
+- Legacy on-device GGUF path remains in code for compatibility.
 - Multi-server configuration with persisted active server/model selection.
 
 ## Requirements
 
-- Xcode 26.3+ (latest stable baseline as of March 2, 2026)
+- Xcode 26.3+
 - Swift language mode 6 (`SWIFT_VERSION = 6.0`)
-- iOS 26.2 deployment target (latest iOS SDK available in stable Xcode 26.3)
+- iOS 26.2 deployment target
 - LM Studio server (local or remote), or another compatible API server
+- Apple device for on-device MLX inference (iPhone/iPad)
 
 ## Run
 
@@ -37,6 +37,12 @@ If command-line builds fail with `xcodebuild requires Xcode`, point `xcode-selec
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 ```
 
+If MLX package builds fail with `missing Metal Toolchain`, install it once:
+
+```bash
+xcodebuild -downloadComponent MetalToolchain
+```
+
 ## Configure Server
 
 In app:
@@ -46,11 +52,28 @@ In app:
 3. Test connection.
 4. Save and select model.
 
+If you want local-only usage, tap `Use On-Device Mode` on first launch and manage MLX model IDs from Settings -> On-Device LLMs.
+
 Default LM Studio local server values:
 
 - Host: `localhost`
 - Port: `1234`
 - TLS: Off (unless you configured HTTPS)
+
+## On-Device MLX Quick Start
+
+1. Open `Settings -> On-Device LLMs`.
+2. Search Hugging Face with keywords like `qwen 3.5 mlx`.
+3. Pick a repository and tap `Use`, then tap `Add MLX Model`.
+4. Tap `Load` for that model.
+5. Select it from the model picker and start chatting.
+
+Notes:
+
+- Model IDs must be `owner/repo` format (example: `mlx-community/Qwen3.5-4B-MLX-4bit`).
+- Hugging Face token is optional; required for private/gated repos.
+- First load downloads model artifacts through `MLXLMCommon` and can take time.
+- Inference speed/memory depend heavily on model size; start with smaller models if needed.
 
 ## API Endpoints Used
 
@@ -65,6 +88,11 @@ LM Studio REST:
 - `GET /api/v1/models`
 - `POST /api/v1/models/load`
 - `POST /api/v1/models/unload`
+
+Hugging Face (for local model discovery):
+
+- `GET /api/models?search=...&full=true&limit=...` (repository discovery/search)
+- `MLXLMCommon` handles artifact download/cache on first model load (`loadModelContainer(id:)`).
 
 ## Truncation Auto-Continue
 
@@ -97,7 +125,8 @@ Guardrails:
 
 ## Current Scope and Limitations
 
-- No in-app model download/store UI yet.
+- Local on-device inference targets MLX repositories (recommended) and supports legacy GGUF paths.
+- MLX model download lifecycle is handled by `MLXLMCommon` cache flow (no in-app progress UI yet).
 - Continuation currently uses chat-completions continuation prompting (not `/v1/responses` stateful chaining).
 - No automated test target currently included.
 
@@ -110,5 +139,10 @@ Guardrails:
 - Load/unload fails:
   - Confirm the selected model exists in LM Studio runtime list.
   - Check server response details shown in Settings error banner.
+- On-device MLX load fails:
+  - Verify model ID is valid `owner/repo`.
+  - Try a smaller MLX model.
+  - Ensure network is reachable for first load.
+  - Add a Hugging Face token if repo is gated/private.
 - No models in picker:
   - Load at least one model in LM Studio, then refresh.

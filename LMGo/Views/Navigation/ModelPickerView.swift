@@ -11,9 +11,9 @@ struct ModelPickerView: View {
             Group {
                 if isInitialLoading {
                     loadingView
-                } else if !serverVM.serverModels.isEmpty {
+                } else if !serverVM.serverModels.isEmpty || !serverVM.localModels.isEmpty {
                     runtimeModelList
-                } else if !serverVM.availableModels.isEmpty {
+                } else if !serverVM.allSelectableModels.isEmpty {
                     loadedModelList
                 } else {
                     emptyView
@@ -64,7 +64,7 @@ struct ModelPickerView: View {
 
     private var isInitialLoading: Bool {
         (serverVM.isLoadingModels || serverVM.isLoadingServerModels)
-            && serverVM.availableModels.isEmpty
+            && serverVM.allSelectableModels.isEmpty
             && serverVM.serverModels.isEmpty
     }
 
@@ -135,11 +135,44 @@ struct ModelPickerView: View {
     private var runtimeModelList: some View {
         ScrollView {
             LazyVStack(spacing: 10) {
+                if !serverVM.localModels.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("On Device")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(LMTheme.textTertiary)
+                            .padding(.horizontal, 2)
+
+                        ForEach(serverVM.localModels) { model in
+                            localModelRow(model)
+                        }
+                    }
+                }
+
+                if !serverVM.serverModels.isEmpty {
+                    Text("Server Runtime")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(LMTheme.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 2)
+                }
+
                 ForEach(serverVM.serverModels) { model in
                     runtimeModelRow(model)
                 }
 
-                if let error = serverVM.modelManagementError {
+                if serverVM.serverModels.isEmpty && !serverVM.availableModels.isEmpty {
+                    Text("Remote Loaded")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(LMTheme.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 2)
+
+                    ForEach(serverVM.availableModels) { model in
+                        remoteLoadedModelRow(model)
+                    }
+                }
+
+                if let error = serverVM.modelManagementError ?? serverVM.localModelsError {
                     runtimeSupportBanner(error)
                         .padding(.top, 2)
                 }
@@ -157,8 +190,9 @@ struct ModelPickerView: View {
     private var loadedModelList: some View {
         ScrollView {
             LazyVStack(spacing: 10) {
-                ForEach(serverVM.availableModels) { model in
+                ForEach(serverVM.allSelectableModels) { model in
                     let isSelected = serverVM.selectedModel?.id == model.id
+                    let isLocal = serverVM.isLocalModel(model)
 
                     Button {
                         serverVM.selectModel(model)
@@ -181,9 +215,9 @@ struct ModelPickerView: View {
                                     .foregroundStyle(LMTheme.textPrimary)
                                     .lineLimit(1)
 
-                                Text("Loaded")
+                                Text(isLocal ? "On Device" : "Loaded")
                                     .font(.caption)
-                                    .foregroundStyle(LMTheme.success)
+                                    .foregroundStyle(isLocal ? LMTheme.warning : LMTheme.success)
                             }
 
                             Spacer()
@@ -200,7 +234,7 @@ struct ModelPickerView: View {
                     .buttonStyle(.plain)
                 }
 
-                if let error = serverVM.modelManagementError {
+                if let error = serverVM.modelManagementError ?? serverVM.localModelsError {
                     runtimeSupportBanner("Runtime controls unavailable: \(error)")
                         .padding(.top, 2)
                 }
@@ -286,6 +320,123 @@ struct ModelPickerView: View {
             }
             .buttonStyle(.plain)
             .disabled(isBusy || serverVM.activeServer == nil || !serverVM.isConnected)
+
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 21))
+                    .foregroundStyle(LMTheme.accent)
+            }
+        }
+        .padding(LMTheme.paddingMD)
+        .glassCard(padding: 0, cornerRadius: 16)
+    }
+
+    private func remoteLoadedModelRow(_ model: LMModel) -> some View {
+        let isSelected = serverVM.selectedModel?.id == model.id
+
+        return Button {
+            serverVM.selectModel(model)
+            dismiss()
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(isSelected ? LMTheme.accentMuted : LMTheme.surfaceSecondary.opacity(0.86))
+                        .frame(width: 38, height: 38)
+
+                    Image(systemName: "cpu")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(isSelected ? LMTheme.accent : LMTheme.textTertiary)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(model.displayName)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(LMTheme.textPrimary)
+                        .lineLimit(1)
+
+                    Text("Loaded")
+                        .font(.caption)
+                        .foregroundStyle(LMTheme.success)
+                }
+
+                Spacer()
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 21))
+                        .foregroundStyle(LMTheme.accent)
+                }
+            }
+            .padding(LMTheme.paddingMD)
+            .glassCard(padding: 0, cornerRadius: 16)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func localModelRow(_ model: LocalModelRecord) -> some View {
+        let lmModel = LMModel(id: model.modelIdentifier, object: "model", ownedBy: "On Device")
+        let isSelected = serverVM.selectedModel?.id == lmModel.id
+        let isBusy = serverVM.isLoadingLocalModel
+
+        return HStack(spacing: 12) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(isSelected ? LMTheme.accentMuted : LMTheme.surfaceSecondary.opacity(0.86))
+                        .frame(width: 38, height: 38)
+
+                    Image(systemName: "iphone.gen3")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(isSelected ? LMTheme.accent : LMTheme.textTertiary)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(model.displayName)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(LMTheme.textPrimary)
+                        .lineLimit(1)
+
+                    Text(model.isLoaded ? "Loaded in memory" : (model.backend == .mlx ? "Ready to load" : "Downloaded"))
+                        .font(.caption)
+                        .foregroundStyle(model.isLoaded ? LMTheme.success : LMTheme.warning)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                serverVM.selectModel(lmModel)
+                dismiss()
+            }
+
+            Button {
+                Task {
+                    if model.isLoaded {
+                        await serverVM.unloadLocalModel()
+                    } else {
+                        await serverVM.loadLocalModel(model)
+                    }
+                }
+            } label: {
+                Group {
+                    if isBusy {
+                        ProgressView()
+                            .tint(LMTheme.accent)
+                            .scaleEffect(0.8)
+                    } else {
+                        Text(model.isLoaded ? "Unload" : "Load")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(model.isLoaded ? LMTheme.warning : LMTheme.accent)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background((model.isLoaded ? LMTheme.warning : LMTheme.accent).opacity(0.16))
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(isBusy)
 
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")

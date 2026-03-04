@@ -13,6 +13,8 @@ final class PersistenceService {
         static let conversations = "lmgo_conversations"
         static let activeServerId = "lmgo_active_server_id"
         static let selectedModelId = "lmgo_selected_model_id"
+        static let localModels = "lmgo_local_models"
+        static let huggingFaceToken = "lmgo_hugging_face_token"
     }
 
     // MARK: - Servers
@@ -64,5 +66,31 @@ final class PersistenceService {
 
     func loadSelectedModelId() -> String? {
         defaults.string(forKey: Keys.selectedModelId)
+    }
+
+    // MARK: - Local Models
+
+    func saveLocalModels(_ models: [LocalModelRecord]) {
+        if let data = try? JSONEncoder().encode(models) {
+            defaults.set(data, forKey: Keys.localModels)
+        }
+    }
+
+    func loadLocalModels() -> [LocalModelRecord] {
+        guard let data = defaults.data(forKey: Keys.localModels),
+              let models = try? JSONDecoder().decode([LocalModelRecord].self, from: data) else {
+            return []
+        }
+        return models
+    }
+
+    // MARK: - Hugging Face
+
+    func saveHuggingFaceToken(_ token: String) {
+        defaults.set(token, forKey: Keys.huggingFaceToken)
+    }
+
+    func loadHuggingFaceToken() -> String {
+        defaults.string(forKey: Keys.huggingFaceToken) ?? ""
     }
 }

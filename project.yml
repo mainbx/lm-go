@@ -22,6 +22,14 @@ settings:
     INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads: true
     GENERATE_INFOPLIST_FILE: true
 
+packages:
+  SwiftLlama:
+    url: https://github.com/pgorzelany/swift-llama-cpp
+    from: 1.2.0
+  MLXSwiftLM:
+    url: https://github.com/ml-explore/mlx-swift-lm
+    from: 2.30.6
+
 targets:
   LMGo:
     type: application
@@ -31,8 +39,19 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lmgo.app
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+        DEVELOPMENT_TEAM: T5QZSL7TD7
+        "CODE_SIGN_IDENTITY[sdk=iphoneos*]": "Apple Development"
         INFOPLIST_KEY_NSLocalNetworkUsageDescription: "LM Go needs local network access to connect to your LLM server"
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: false
+    dependencies:
+      - package: SwiftLlama
+        product: SwiftLlama
+      - package: MLXSwiftLM
+        product: MLXLLM
+      - package: MLXSwiftLM
+        product: MLXLMCommon
     info:
       path: LMGo/Info.plist
       properties:

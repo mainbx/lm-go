@@ -11,6 +11,7 @@ final class ChatViewModel: ObservableObject {
     @Published private(set) var streamStartedAt: Date?
 
     private var streamingService: StreamingService?
+    private var localStreamingTask: Task<Void, Never>?
     private let persistence = PersistenceService.shared
     private let maxAutoContinuationHops = 3
     private var userRequestedStop = false
@@ -24,8 +25,7 @@ final class ChatViewModel: ObservableObject {
     var canSend: Bool {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !isStreaming
-            && serverViewModel?.activeServer != nil
-            && serverViewModel?.selectedModel != nil
+            && (serverViewModel?.canSendWithSelectedModel ?? false)
     }
 
     // MARK: - Actions
@@ -33,9 +33,15 @@ final class ChatViewModel: ObservableObject {
     func sendMessage() {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        guard let server = serverViewModel?.activeServer,
-              let model = serverViewModel?.selectedModel else {
+        guard let serverVM = serverViewModel,
+              let model = serverVM.selectedModel else {
             errorMessage = "No server or model selected"
+            return
+        }
+
+        let isLocalModel = serverVM.isLocalModel(model)
+        if !isLocalModel, serverVM.activeServer == nil {
+            errorMessage = "No server selected for remote model"
             return
         }
 
@@ -54,19 +60,31 @@ final class ChatViewModel: ObservableObject {
         currentConversation?.updatedAt = Date()
 
         userRequestedStop = false
-        startStreaming(
-            server: server,
-            model: model.id,
-            requestMessages: currentConversation?.messages ?? [],
-            resetOutput: true,
-            continuationHop: 0
-        )
+
+        let requestMessages = currentConversation?.messages ?? []
+        if isLocalModel {
+            startLocalStreaming(
+                requestMessages: requestMessages,
+                resetOutput: true
+            )
+        } else if let server = serverVM.activeServer {
+            startStreaming(
+                server: server,
+                model: model.id,
+                requestMessages: requestMessages,
+                resetOutput: true,
+                continuationHop: 0
+            )
+        }
     }
 
     func stopStreaming() {
         userRequestedStop = true
         streamingService?.cancel()
         streamingService = nil
+        localStreamingTask?.cancel()
+        localStreamingTask = nil
+        Task { await serverViewModel?.stopLocalCompletion() }
 
         finalizeStreaming(appendAssistantMessage: !streamingText.isEmpty)
     }
@@ -77,6 +95,8 @@ final class ChatViewModel: ObservableObject {
         inputText = ""
         streamingText = ""
         isStreaming = false
+        localStreamingTask?.cancel()
+        localStreamingTask = nil
         errorMessage = nil
         streamStartedAt = nil
         userRequestedStop = false
@@ -87,6 +107,8 @@ final class ChatViewModel: ObservableObject {
         currentConversation = conversation
         inputText = ""
         streamingText = ""
+        localStreamingTask?.cancel()
+        localStreamingTask = nil
         errorMessage = nil
         streamStartedAt = nil
         userRequestedStop = false
@@ -98,6 +120,56 @@ final class ChatViewModel: ObservableObject {
     }
 
     // MARK: - Streaming
+
+    private func startLocalStreaming(
+        requestMessages: [Message],
+        resetOutput: Bool
+    ) {
+        guard !requestMessages.isEmpty else {
+            isStreaming = false
+            streamStartedAt = nil
+            return
+        }
+
+        isStreaming = true
+        if resetOutput {
+            streamingText = ""
+            streamStartedAt = Date()
+        }
+
+        localStreamingTask?.cancel()
+        localStreamingTask = Task { [weak self] in
+            guard let self else { return }
+
+            do {
+                guard let serverViewModel = self.serverViewModel else {
+                    throw LocalInferenceError.modelNotLoaded
+                }
+
+                try await serverViewModel.streamLocalCompletion(
+                    messages: requestMessages,
+                    onToken: { [weak self] token in
+                        guard let self else { return }
+                        Task { @MainActor in
+                            self.streamingText += token
+                        }
+                    }
+                )
+
+                if Task.isCancelled || self.userRequestedStop {
+                    return
+                }
+
+                self.finalizeStreaming(appendAssistantMessage: !self.streamingText.isEmpty)
+            } catch {
+                if Task.isCancelled || self.userRequestedStop {
+                    return
+                }
+                self.errorMessage = error.localizedDescription
+                self.finalizeStreaming(appendAssistantMessage: !self.streamingText.isEmpty)
+            }
+        }
+    }
 
     private func startStreaming(
         server: ServerConfig,
@@ -223,6 +295,7 @@ final class ChatViewModel: ObservableObject {
         isStreaming = false
         streamStartedAt = nil
         streamingService = nil
+        localStreamingTask = nil
         saveCurrentConversation()
 
         // Auto-generate title from first exchange

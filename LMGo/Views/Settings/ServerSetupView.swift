@@ -15,6 +15,7 @@ struct ServerSetupView: View {
 
     var editingServer: ServerConfig?
     var isInitialSetup: Bool = false
+    var onSkipInitialSetup: (() -> Void)? = nil
 
     enum TestResult {
         case success
@@ -32,6 +33,18 @@ struct ServerSetupView: View {
                     formSection
 
                     testConnectionButton
+
+                    if isInitialSetup {
+                        Button {
+                            onSkipInitialSetup?()
+                        } label: {
+                            Text("Use On-Device Mode")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(LMTheme.textSecondary)
+                                .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.plain)
+                    }
 
                     if let result = testResult {
                         testResultBanner(result)

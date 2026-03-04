@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("lmgo_bypass_server_setup") private var bypassServerSetup = false
 
     @StateObject private var serverVM = ServerViewModel()
     @StateObject private var chatVM = ChatViewModel()
@@ -14,8 +15,14 @@ struct ContentView: View {
         ZStack {
             LMTheme.appBackground.ignoresSafeArea()
 
-            if !serverVM.hasServers {
-                ServerSetupView(serverVM: serverVM, isInitialSetup: true)
+            if !serverVM.hasServers && !bypassServerSetup {
+                ServerSetupView(
+                    serverVM: serverVM,
+                    isInitialSetup: true,
+                    onSkipInitialSetup: {
+                        bypassServerSetup = true
+                    }
+                )
             } else {
                 mainContent
                     .transition(.opacity)
@@ -74,9 +81,16 @@ struct ContentView: View {
             Button {
                 showModelPicker = true
             } label: {
+                let statusColor: Color = {
+                    if serverVM.isSelectedModelLocal {
+                        return serverVM.isSelectedLocalModelLoaded ? LMTheme.success : LMTheme.warning
+                    }
+                    return serverVM.isConnected ? LMTheme.success : LMTheme.error
+                }()
+
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(serverVM.isConnected ? LMTheme.success : LMTheme.error)
+                        .fill(statusColor)
                         .frame(width: 8, height: 8)
 
                     Text(serverVM.selectedModel?.displayName ?? "Select Model")

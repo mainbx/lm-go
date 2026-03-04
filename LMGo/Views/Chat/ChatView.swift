@@ -48,16 +48,29 @@ struct ChatView: View {
     // MARK: - Status
 
     private var statusBar: some View {
-        HStack(spacing: 8) {
+        let isLocal = serverVM.isSelectedModelLocal
+        let statusColor: Color = {
+            if isLocal {
+                return serverVM.isSelectedLocalModelLoaded ? LMTheme.success : LMTheme.warning
+            }
+            return serverVM.isConnected ? LMTheme.success : LMTheme.error
+        }()
+
+        return HStack(spacing: 8) {
             Circle()
-                .fill(serverVM.isConnected ? LMTheme.success : LMTheme.error)
+                .fill(statusColor)
                 .frame(width: 8, height: 8)
 
-            Text(serverVM.isConnected ? "Connected" : "Disconnected")
+            Text(serverVM.selectedModelConnectionLabel)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(LMTheme.textSecondary)
 
-            if let host = serverVM.activeServer?.displayURL {
+            if isLocal {
+                Text(serverVM.selectedLocalModelSourceLabel)
+                    .font(.caption2)
+                    .foregroundStyle(LMTheme.textTertiary)
+                    .lineLimit(1)
+            } else if let host = serverVM.activeServer?.displayURL {
                 Text(host)
                     .font(.caption2)
                     .foregroundStyle(LMTheme.textTertiary)
@@ -113,12 +126,14 @@ struct ChatView: View {
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(LMTheme.textPrimary)
 
-                    Text("Ask anything. Your local model is ready.")
+                    Text(serverVM.isSelectedModelLocal
+                         ? "Ask anything. Running on-device."
+                         : "Ask anything. Your server model is ready.")
                         .font(.subheadline)
                         .foregroundStyle(LMTheme.textSecondary)
                 }
 
-                if !serverVM.isConnected {
+                if serverVM.shouldShowReconnectButton {
                     Button {
                         Task { await serverVM.connectToActiveServer() }
                     } label: {

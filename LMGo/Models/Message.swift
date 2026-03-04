@@ -1,6 +1,6 @@
 import Foundation
 
-struct ParsedMessageContent {
+struct ParsedMessageContent: Sendable {
     let responseText: String
     let thoughtText: String?
     let hasOpenThoughtTag: Bool
@@ -10,14 +10,14 @@ struct ParsedMessageContent {
     }
 }
 
-struct Message: Identifiable, Codable, Equatable {
+struct Message: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     let role: Role
     var content: String
     let timestamp: Date
     var thoughtDuration: TimeInterval?
 
-    enum Role: String, Codable {
+    enum Role: String, Codable, Sendable {
         case system
         case user
         case assistant
