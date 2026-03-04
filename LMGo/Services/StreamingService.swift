@@ -3,7 +3,7 @@ import Foundation
 /// Handles Server-Sent Events (SSE) streaming for chat completions
 @MainActor
 final class StreamingService: NSObject, URLSessionDataDelegate {
-    private nonisolated(unsafe) var session: URLSession!
+    private nonisolated(unsafe) var session: URLSession?
     private var dataTask: URLSessionDataTask?
     private var buffer = ""
     private var lastFinishReason: String?
@@ -15,9 +15,11 @@ final class StreamingService: NSObject, URLSessionDataDelegate {
 
     override init() {
         super.init()
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 300
-        self.session = URLSession(configuration: config, delegate: self, delegateQueue: .main)
+        rebuildSession()
+    }
+
+    deinit {
+        session?.invalidateAndCancel()
     }
 
     func streamChatCompletion(
@@ -28,6 +30,10 @@ final class StreamingService: NSObject, URLSessionDataDelegate {
         onComplete: @escaping (StreamCompletion) -> Void,
         onError: @escaping (Error) -> Void
     ) {
+        if session == nil {
+            rebuildSession()
+        }
+
         self.onToken = onToken
         self.onComplete = onComplete
         self.onError = onError
@@ -62,13 +68,19 @@ final class StreamingService: NSObject, URLSessionDataDelegate {
             return
         }
 
+        guard let session else {
+            onError(APIError.networkError(URLError(.unknown)))
+            teardownStream(invalidateSession: false)
+            return
+        }
+
         dataTask = session.dataTask(with: request)
         dataTask?.resume()
     }
 
     func cancel() {
         dataTask?.cancel()
-        resetCallbacks()
+        teardownStream(invalidateSession: true)
     }
 
     // MARK: - URLSessionDataDelegate
@@ -92,7 +104,7 @@ final class StreamingService: NSObject, URLSessionDataDelegate {
             if let error = error {
                 if (error as NSError).code == NSURLErrorCancelled { return }
                 onError?(error)
-                resetCallbacks()
+                teardownStream(invalidateSession: true)
             } else {
                 emitCompletionIfNeeded()
             }
@@ -109,6 +121,7 @@ final class StreamingService: NSObject, URLSessionDataDelegate {
            !(200...299).contains(httpResponse.statusCode) {
             MainActor.assumeIsolated {
                 onError?(APIError.httpError(httpResponse.statusCode, "Stream request failed"))
+                teardownStream(invalidateSession: true)
             }
             completionHandler(.cancel)
             return
@@ -151,6 +164,20 @@ final class StreamingService: NSObject, URLSessionDataDelegate {
         guard !didEmitCompletion else { return }
         didEmitCompletion = true
         onComplete?(StreamCompletion(finishReason: lastFinishReason))
+        teardownStream(invalidateSession: true)
+    }
+
+    private func rebuildSession() {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 300
+        session = URLSession(configuration: config, delegate: self, delegateQueue: .main)
+    }
+
+    private func teardownStream(invalidateSession: Bool) {
+        if invalidateSession {
+            session?.invalidateAndCancel()
+            session = nil
+        }
         resetCallbacks()
     }
 

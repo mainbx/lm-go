@@ -78,16 +78,20 @@ struct SettingsView: View {
                 }
 
                 if huggingFaceRepoId.isEmpty {
-                    huggingFaceRepoId = "mlx-community/Qwen3.5-4B-MLX-4bit"
+                    huggingFaceRepoId = "mlx-community/Qwen3.5-4B-4bit"
                 }
                 if huggingFaceSearchQuery.isEmpty {
-                    huggingFaceSearchQuery = "qwen 3.5 mlx"
+                    huggingFaceSearchQuery = "qwen3.5 mlx-community"
                 }
 
                 if serverVM.isConnected {
                     Task {
                         await serverVM.refreshServerModels()
                     }
+                }
+
+                Task {
+                    await serverVM.refreshLocalMLXMemoryStats()
                 }
             }
             .onDisappear {
@@ -640,7 +644,7 @@ struct SettingsView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(LMTheme.textTertiary)
 
-                    TextField("owner/repo", text: $huggingFaceRepoId)
+                    TextField("mlx-community/Qwen3.5-4B-4bit", text: $huggingFaceRepoId)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .padding(.horizontal, 12)
@@ -651,6 +655,10 @@ struct SettingsView: View {
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
                                 .stroke(LMTheme.borderLight, lineWidth: 1)
                         )
+
+                    Text("Only `mlx-community/*` repositories are allowed.")
+                        .font(.caption)
+                        .foregroundStyle(LMTheme.textTertiary)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -692,7 +700,82 @@ struct SettingsView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
                 .buttonStyle(.plain)
-                .disabled(huggingFaceRepoId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(
+                    huggingFaceRepoId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        || !huggingFaceRepoId.trimmingCharacters(in: .whitespacesAndNewlines)
+                        .lowercased()
+                        .hasPrefix("mlx-community/")
+                )
+
+                Rectangle()
+                    .fill(LMTheme.border)
+                    .frame(height: 1)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("MLX Memory")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(LMTheme.textTertiary)
+
+                    if let stats = serverVM.localMLXMemoryStats {
+                        HStack(spacing: 8) {
+                            memoryStatChip(title: "Active", value: formatMemoryBytes(stats.activeBytes))
+                            memoryStatChip(title: "Cache", value: formatMemoryBytes(stats.cacheBytes))
+                            memoryStatChip(title: "Peak", value: formatMemoryBytes(stats.peakBytes))
+                        }
+
+                        Text("Updated \(stats.capturedAt.formatted(date: .omitted, time: .standard))")
+                            .font(.caption2)
+                            .foregroundStyle(LMTheme.textTertiary)
+                    } else {
+                        Text("No memory snapshot yet.")
+                            .font(.caption)
+                            .foregroundStyle(LMTheme.textSecondary)
+                    }
+
+                    HStack(spacing: 10) {
+                        Button {
+                            Task { await serverVM.refreshLocalMLXMemoryStats() }
+                        } label: {
+                            HStack(spacing: 6) {
+                                if serverVM.isRefreshingLocalMLXMemory {
+                                    ProgressView()
+                                        .tint(LMTheme.accent)
+                                        .scaleEffect(0.75)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                        .font(.system(size: 12, weight: .semibold))
+                                }
+                                Text("Refresh")
+                                    .font(.caption.weight(.semibold))
+                            }
+                            .foregroundStyle(LMTheme.accent)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .background(LMTheme.accentMuted)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(serverVM.isRefreshingLocalMLXMemory)
+
+                        Button {
+                            Task { await serverVM.clearLocalMLXMemoryCache() }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 12, weight: .semibold))
+                                Text("Clear Cache")
+                                    .font(.caption.weight(.semibold))
+                            }
+                            .foregroundStyle(LMTheme.warning)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .background(LMTheme.warning.opacity(0.16))
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(serverVM.isRefreshingLocalMLXMemory)
+                    }
+                }
 
                 if !serverVM.localModels.isEmpty {
                     Rectangle()
@@ -897,6 +980,30 @@ struct SettingsView: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(LMTheme.borderLight, lineWidth: 1)
         )
+    }
+
+    private func memoryStatChip(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(LMTheme.textTertiary)
+            Text(value)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(LMTheme.textPrimary)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(LMTheme.surfaceSecondary.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(LMTheme.borderLight, lineWidth: 1)
+        )
+    }
+
+    private func formatMemoryBytes(_ bytes: Int) -> String {
+        ByteCountFormatter.string(fromByteCount: Int64(max(0, bytes)), countStyle: .memory)
     }
 
     // MARK: - Embeddings

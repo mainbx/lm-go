@@ -12,7 +12,7 @@ enum HuggingFaceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidRepository:
-            return "Enter a valid Hugging Face repository ID (for example: mlx-community/Qwen3.5-4B-MLX-4bit)"
+            return "Enter a valid Hugging Face repository ID (for example: mlx-community/Qwen3.5-4B-4bit)"
         case .invalidSearchQuery:
             return "Enter search keywords (for example: qwen 3.5 mlx)"
         case .invalidURL:
@@ -24,7 +24,7 @@ enum HuggingFaceError: LocalizedError {
         case .noGGUFFiles:
             return "No GGUF files found in this repository"
         case .noMLXRepositories:
-            return "No MLX model repositories found for this query"
+            return "No mlx-community MLX repositories found for this query"
         }
     }
 }
@@ -174,7 +174,7 @@ actor HuggingFaceService {
         }
 
         let results = payload
-            .filter { isLikelyMLXRepository($0, query: query) }
+            .filter { isMLXCommunityRepositoryID($0.id) && isLikelyMLXRepository($0, query: query) }
             .prefix(limit)
             .map { item in
                 let artifactCount = item.siblings?.count
@@ -286,6 +286,10 @@ actor HuggingFaceService {
     private func isValidRepositoryID(_ repoId: String) -> Bool {
         let parts = repoId.split(separator: "/")
         return parts.count == 2 && !parts[0].isEmpty && !parts[1].isEmpty
+    }
+
+    private func isMLXCommunityRepositoryID(_ repoId: String) -> Bool {
+        repoId.trimmingCharacters(in: .whitespacesAndNewlines).lowercased().hasPrefix("mlx-community/")
     }
 
     private func encodedPath(_ value: String) -> String {

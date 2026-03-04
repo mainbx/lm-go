@@ -28,7 +28,7 @@ packages:
     from: 1.2.0
   MLXSwiftLM:
     url: https://github.com/ml-explore/mlx-swift-lm
-    from: 2.30.6
+    revision: e33eba8513595bde535719c48fedcb10ade5af57
   MLXSwift:
     url: https://github.com/ml-explore/mlx-swift
     from: 0.30.6

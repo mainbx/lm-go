@@ -21,11 +21,11 @@ struct MessageBubble: View {
         return message.parsedContent
     }
 
-    private var thoughtInProgress: Bool {
-        !isUser && (parsedContent.hasOpenThoughtTag || (isStreaming && parsedContent.hasThought && parsedContent.responseText.isEmpty))
-    }
-
     var body: some View {
+        let parsed = parsedContent
+        let thoughtInProgress = !isUser
+            && (parsed.hasOpenThoughtTag || (isStreaming && parsed.hasThought && parsed.responseText.isEmpty))
+
         HStack(alignment: .bottom, spacing: 10) {
             if isUser {
                 Spacer(minLength: 52)
@@ -35,7 +35,7 @@ struct MessageBubble: View {
             }
 
             VStack(alignment: isUser ? .trailing : .leading, spacing: 8) {
-                if !isUser, let thoughtText = parsedContent.thoughtText {
+                if !isUser, let thoughtText = parsed.thoughtText {
                     ReasoningBanner(
                         thoughtText: thoughtText,
                         duration: message.thoughtDuration,
@@ -43,20 +43,20 @@ struct MessageBubble: View {
                     )
                 }
 
-                if !parsedContent.responseText.isEmpty {
-                    Text(parsedContent.responseText)
+                if !parsed.responseText.isEmpty {
+                    Text(parsed.responseText)
                         .font(.body)
                         .foregroundStyle(isUser ? .white : LMTheme.textPrimary)
                         .textSelection(.enabled)
                         .lineSpacing(2)
                         .multilineTextAlignment(.leading)
-                } else if thoughtInProgress && parsedContent.thoughtText == nil {
+                } else if thoughtInProgress && parsed.thoughtText == nil {
                     Text("Thinking…")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(LMTheme.textTertiary)
                 }
 
-                if isStreaming && !parsedContent.hasThought {
+                if isStreaming && !parsed.hasThought {
                     streamingCursor
                 }
 

@@ -25,6 +25,8 @@ final class ServerViewModel: ObservableObject {
     @Published var isLoadingLocalModel = false
     @Published var modelManagementError: String?
     @Published var localModelsError: String?
+    @Published var localMLXMemoryStats: LocalMLXMemoryStats?
+    @Published var isRefreshingLocalMLXMemory = false
     @Published var isGeneratingEmbedding = false
     @Published var embeddingError: String?
     @Published var lastEmbeddingDimension: Int?
@@ -48,6 +50,7 @@ final class ServerViewModel: ObservableObject {
         loadLocalState()
         loadSavedState()
         startConnectivityMonitoringIfNeeded()
+        Task { await refreshLocalMLXMemoryStats() }
     }
 
     deinit {
@@ -454,8 +457,8 @@ final class ServerViewModel: ObservableObject {
     func addLocalMLXModel(repoId rawRepoID: String) {
         let repoId = rawRepoID.trimmingCharacters(in: .whitespacesAndNewlines)
         let parts = repoId.split(separator: "/")
-        guard parts.count == 2 else {
-            localModelsError = "Enter a valid model ID (for example: mlx-community/Qwen3.5-4B-MLX-4bit)"
+        guard parts.count == 2, repoId.lowercased().hasPrefix("mlx-community/") else {
+            localModelsError = "Only mlx-community model IDs are allowed (for example: mlx-community/Qwen3.5-4B-4bit)"
             return
         }
 
@@ -535,6 +538,7 @@ final class ServerViewModel: ObservableObject {
     func loadLocalModel(_ model: LocalModelRecord) async {
         do {
             try await loadLocalModelThrowing(model)
+            await refreshLocalMLXMemoryStats()
         } catch {
             localModelsError = error.localizedDescription
         }
@@ -549,6 +553,19 @@ final class ServerViewModel: ObservableObject {
             return updated
         }
         persistence.saveLocalModels(localModels)
+        await refreshLocalMLXMemoryStats()
+    }
+
+    func refreshLocalMLXMemoryStats() async {
+        isRefreshingLocalMLXMemory = true
+        defer { isRefreshingLocalMLXMemory = false }
+        localMLXMemoryStats = await localMLXInferenceService.memoryStats()
+    }
+
+    func clearLocalMLXMemoryCache() async {
+        isRefreshingLocalMLXMemory = true
+        defer { isRefreshingLocalMLXMemory = false }
+        localMLXMemoryStats = await localMLXInferenceService.clearMemoryCache()
     }
 
     func clearLocalModelsError() {
@@ -557,7 +574,7 @@ final class ServerViewModel: ObservableObject {
 
     func streamLocalCompletion(
         messages: [Message],
-        onToken: @escaping @Sendable (String) -> Void
+        onToken: @escaping @Sendable (String) async -> Void
     ) async throws {
         guard let selectedModel, isLocalModel(selectedModel),
               let record = localModelRecord(for: selectedModel) else {
@@ -567,9 +584,9 @@ final class ServerViewModel: ObservableObject {
         try await loadLocalModelThrowing(record)
         switch record.backend {
         case .gguf:
-            _ = try await localInferenceService.streamCompletion(messages: messages, onToken: onToken)
+            try await localInferenceService.streamCompletion(messages: messages, onToken: onToken)
         case .mlx:
-            _ = try await localMLXInferenceService.streamCompletion(messages: messages, onToken: onToken)
+            try await localMLXInferenceService.streamCompletion(messages: messages, onToken: onToken)
         }
     }
 

@@ -63,11 +63,10 @@ actor LocalInferenceService {
         loadedModelPath == modelURL.path(percentEncoded: false)
     }
 
-    @discardableResult
     func streamCompletion(
         messages: [Message],
-        onToken: @escaping @Sendable (String) -> Void
-    ) async throws -> String {
+        onToken: @escaping @Sendable (String) async -> Void
+    ) async throws {
         guard let service else {
             throw LocalInferenceError.modelNotLoaded
         }
@@ -90,12 +89,9 @@ actor LocalInferenceService {
 
         let stream = try await service.streamCompletion(of: llamaMessages, samplingConfig: sampling)
 
-        var output = ""
         for try await chunk in stream {
-            output += chunk
-            onToken(chunk)
+            await onToken(chunk)
         }
-        return output
     }
 
     private func role(for role: Message.Role) -> LlamaChatMessage.Role {

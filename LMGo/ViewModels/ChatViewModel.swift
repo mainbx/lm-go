@@ -150,8 +150,8 @@ final class ChatViewModel: ObservableObject {
                     messages: requestMessages,
                     onToken: { [weak self] token in
                         guard let self else { return }
-                        Task { @MainActor in
-                            self.streamingText += token
+                        await MainActor.run {
+                            self.streamingText.append(token)
                         }
                     }
                 )
@@ -198,7 +198,7 @@ final class ChatViewModel: ObservableObject {
             model: model,
             messages: requestMessages,
             onToken: { [weak self] token in
-                self?.streamingText += token
+                self?.streamingText.append(token)
             },
             onComplete: { [weak self] completion in
                 self?.handleStreamCompletion(

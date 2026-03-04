@@ -1,4 +1,5 @@
 import Foundation
+import MLX
 @preconcurrency import MLXLLM
 @preconcurrency import MLXLMCommon
 
@@ -14,6 +15,13 @@ enum LocalMLXInferenceError: LocalizedError {
             return "Invalid MLX model identifier"
         }
     }
+}
+
+struct LocalMLXMemoryStats: Sendable {
+    let activeBytes: Int
+    let cacheBytes: Int
+    let peakBytes: Int
+    let capturedAt: Date
 }
 
 actor LocalMLXInferenceService {
@@ -45,6 +53,22 @@ actor LocalMLXInferenceService {
         stopRequested = true
         modelContainer = nil
         loadedModelId = nil
+        Memory.clearCache()
+    }
+
+    func memoryStats() -> LocalMLXMemoryStats {
+        let snapshot = Memory.snapshot()
+        return LocalMLXMemoryStats(
+            activeBytes: snapshot.activeMemory,
+            cacheBytes: snapshot.cacheMemory,
+            peakBytes: snapshot.peakMemory,
+            capturedAt: Date()
+        )
+    }
+
+    func clearMemoryCache() -> LocalMLXMemoryStats {
+        Memory.clearCache()
+        return memoryStats()
     }
 
     func stopCompletion() async {
@@ -55,11 +79,10 @@ actor LocalMLXInferenceService {
         loadedModelId == modelID
     }
 
-    @discardableResult
     func streamCompletion(
         messages: [Message],
-        onToken: @escaping @Sendable (String) -> Void
-    ) async throws -> String {
+        onToken: @escaping @Sendable (String) async -> Void
+    ) async throws {
         guard let container = modelContainer else {
             throw LocalMLXInferenceError.modelNotLoaded
         }
@@ -98,8 +121,6 @@ actor LocalMLXInferenceService {
             )
         }
 
-        var output = ""
-
         for await generation in stream {
             if stopRequested || Task.isCancelled {
                 break
@@ -109,10 +130,7 @@ actor LocalMLXInferenceService {
                 continue
             }
 
-            output += chunk
-            onToken(chunk)
+            await onToken(chunk)
         }
-
-        return output
     }
 }

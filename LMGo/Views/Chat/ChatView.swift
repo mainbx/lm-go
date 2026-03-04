@@ -241,9 +241,7 @@ struct ChatView: View {
             }
             .onChange(of: chatVM.streamingText) {
                 guard !chatVM.streamingText.isEmpty else { return }
-                withAnimation(.easeOut(duration: 0.1)) {
-                    proxy.scrollTo("streaming", anchor: .bottom)
-                }
+                proxy.scrollTo("streaming", anchor: .bottom)
             }
         }
     }
