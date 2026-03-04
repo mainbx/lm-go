@@ -29,6 +29,9 @@ packages:
   MLXSwiftLM:
     url: https://github.com/ml-explore/mlx-swift-lm
     from: 2.30.6
+  MLXSwift:
+    url: https://github.com/ml-explore/mlx-swift
+    from: 0.30.6
 
 targets:
   LMGo:
@@ -52,6 +55,9 @@ targets:
         product: MLXLLM
       - package: MLXSwiftLM
         product: MLXLMCommon
+      # Link MLX core explicitly to avoid transitive static-link drops in some Xcode setups.
+      - package: MLXSwift
+        product: MLX
     info:
       path: LMGo/Info.plist
       properties:

@@ -13,6 +13,7 @@
 		28575DD098372B57D882BBC8 /* ServerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D443EEF0AC656FB8AC2BEBF /* ServerSetupView.swift */; };
 		3D809C8F41C0DDA40065F7A1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0C063956C2BBACF6BC0839C /* Theme.swift */; };
 		479C0A09693BAB4CA1D806C6 /* LocalModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32C2453483B9004B2ACD6BD /* LocalModel.swift */; };
+		48FE8FDEE67C767CD365023A /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = D1D23D28EDF4F0E3AF651C49 /* MLX */; };
 		5E7A4AF9E503E988FBD8CF44 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = F64A7CD91BD3E78B8EFA8056 /* Message.swift */; };
 		6A17041C299EEF1F1E27B132 /* ConversationListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAFF5AB11978FEF420E560EC /* ConversationListView.swift */; };
 		6C3BA5FB5DFB91B866FCC0D9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8554C4BB6DEFE245BA46F14F /* Assets.xcassets */; };
@@ -75,6 +76,7 @@
 				A48F44F5F8CC8973A68F99CA /* SwiftLlama in Frameworks */,
 				735A72799F0A8F220C852E30 /* MLXLLM in Frameworks */,
 				6D000ED7CD6D4ACF09815F9A /* MLXLMCommon in Frameworks */,
+				48FE8FDEE67C767CD365023A /* MLX in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -214,6 +216,7 @@
 				98B236E74C404760E0BA70CA /* SwiftLlama */,
 				F2139085FB7797A5F1306635 /* MLXLLM */,
 				9D8F55BC15E2759402B05525 /* MLXLMCommon */,
+				D1D23D28EDF4F0E3AF651C49 /* MLX */,
 			);
 			productName = LMGo;
 			productReference = 1A259B2181C64758BF395DD5 /* LMGo.app */;
@@ -245,6 +248,7 @@
 			mainGroup = 175173C988281232D99EB2D6;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				269AE68051841256AE4210A1 /* XCRemoteSwiftPackageReference "mlx-swift" */,
 				63FFE5DE8EEED5D194FC3385 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
 				E3FFB7834DE4C6D7E751597A /* XCRemoteSwiftPackageReference "swift-llama-cpp" */,
 			);
@@ -512,6 +516,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		269AE68051841256AE4210A1 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.30.6;
+			};
+		};
 		63FFE5DE8EEED5D194FC3385 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm";
@@ -540,6 +552,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 63FFE5DE8EEED5D194FC3385 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
 			productName = MLXLMCommon;
+		};
+		D1D23D28EDF4F0E3AF651C49 /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 269AE68051841256AE4210A1 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
 		};
 		F2139085FB7797A5F1306635 /* MLXLLM */ = {
 			isa = XCSwiftPackageProductDependency;
