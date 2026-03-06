@@ -1,5 +1,87 @@
 import SwiftUI
 
+// MARK: - Swipe-to-Delete Wrapper
+
+private struct SwipeToDeleteCard<Content: View>: View {
+    let onDelete: () -> Void
+    @ViewBuilder let content: () -> Content
+
+    @State private var offset: CGFloat = 0
+    @State private var showDelete = false
+    @GestureState private var dragOffset: CGFloat = 0
+
+    private let deleteThreshold: CGFloat = -70
+    private let snapWidth: CGFloat = 80
+
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            // Delete background
+            HStack(spacing: 0) {
+                Spacer()
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                        onDelete()
+                    }
+                } label: {
+                    Image(systemName: "trash.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: snapWidth, height: .infinity)
+                        .frame(maxHeight: .infinity)
+                }
+                .background(LMTheme.error)
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 0,
+                        bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 16,
+                        topTrailingRadius: 16,
+                        style: .continuous
+                    )
+                )
+            }
+            .opacity(effectiveOffset < 0 ? 1 : 0)
+
+            // Main content
+            content()
+                .offset(x: effectiveOffset)
+                .gesture(
+                    DragGesture(minimumDistance: 16)
+                        .updating($dragOffset) { value, state, _ in
+                            // Only allow left swipe
+                            if value.translation.width < 0 || offset < 0 {
+                                state = value.translation.width
+                            }
+                        }
+                        .onEnded { value in
+                            let projected = value.predictedEndTranslation.width
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                if projected < -120 {
+                                    // Fast swipe — full delete
+                                    onDelete()
+                                } else if (offset + value.translation.width) < deleteThreshold {
+                                    // Snap open
+                                    offset = -snapWidth
+                                    showDelete = true
+                                } else {
+                                    // Snap closed
+                                    offset = 0
+                                    showDelete = false
+                                }
+                            }
+                        }
+                )
+        }
+        .clipped()
+    }
+
+    private var effectiveOffset: CGFloat {
+        let raw = offset + dragOffset
+        // Don't allow positive (right) swipe
+        return min(0, raw)
+    }
+}
+
 struct ConversationListView: View {
     @ObservedObject var conversationsVM: ConversationsViewModel
     @ObservedObject var chatVM: ChatViewModel
@@ -164,25 +246,44 @@ struct ConversationListView: View {
         LazyVStack(spacing: 10) {
             ForEach(conversationsVM.conversations) { conversation in
                 let isSelected = chatVM.currentConversation?.id == conversation.id
-                Button {
-                    chatVM.loadConversation(conversation)
-                    dismiss()
-                } label: {
-                    conversationRow(conversation, isSelected: isSelected)
-                }
-                .buttonStyle(.plain)
-                .contextMenu {
-                    Button(role: .destructive) {
-                        if let index = conversationsVM.conversations.firstIndex(where: { $0.id == conversation.id }) {
-                            conversationsVM.deleteConversations(at: IndexSet(integer: index))
-                        }
+                SwipeToDeleteCard {
+                    deleteConversation(conversation)
+                } content: {
+                    Button {
+                        chatVM.loadConversation(conversation)
+                        dismiss()
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        conversationRow(conversation, isSelected: isSelected)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            deleteConversation(conversation)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
                     }
                 }
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .top)),
+                    removal: .opacity.combined(with: .move(edge: .trailing))
+                ))
             }
         }
-        .animation(.easeOut(duration: 0.2), value: conversationsVM.conversations.count)
+        .animation(.easeInOut(duration: 0.25), value: conversationsVM.conversations.map(\.id))
+    }
+
+    // MARK: - Delete
+
+    private func deleteConversation(_ conversation: Conversation) {
+        // If the deleted conversation is the currently active chat, clear it
+        if chatVM.currentConversation?.id == conversation.id {
+            chatVM.clearConversation()
+        }
+
+        withAnimation(.easeInOut(duration: 0.25)) {
+            conversationsVM.deleteConversation(conversation)
+        }
     }
 
     private func conversationRow(_ conversation: Conversation, isSelected: Bool) -> some View {

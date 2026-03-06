@@ -520,8 +520,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ml-explore/mlx-swift";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.30.6;
+				kind = revision;
+				revision = dcf5c6bcbe7b66f3359f7a6b5d8ad1f73ed0d5cf;
 			};
 		};
 		63FFE5DE8EEED5D194FC3385 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
@@ -529,7 +529,7 @@
 			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm";
 			requirement = {
 				kind = revision;
-				revision = e33eba8513595bde535719c48fedcb10ade5af57;
+				revision = 6bb84aac13f76ca5e2c3ff312bc072977e684ff4;
 			};
 		};
 		E3FFB7834DE4C6D7E751597A /* XCRemoteSwiftPackageReference "swift-llama-cpp" */ = {

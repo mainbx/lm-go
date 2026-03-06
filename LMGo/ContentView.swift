@@ -57,6 +57,7 @@ struct ContentView: View {
                 .presentationCornerRadius(30)
                 .presentationCompactAdaptation(.sheet)
                 .onDisappear {
+                    // Sync list in case a conversation was modified while sidebar was open
                     conversationsVM.refresh()
                 }
             }

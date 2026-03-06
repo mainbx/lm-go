@@ -91,6 +91,11 @@ final class ChatViewModel: ObservableObject {
 
     func newConversation() {
         saveCurrentConversation()
+        clearConversation()
+    }
+
+    /// Resets the chat state without saving first (used when the conversation was deleted).
+    func clearConversation() {
         currentConversation = nil
         inputText = ""
         streamingText = ""

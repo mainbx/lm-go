@@ -8,7 +8,9 @@ LM Go is a SwiftUI iOS chat app for:
 
 ## Highlights
 
+- ChatGPT-inspired dark theme with neutral palette and teal accent.
 - Glass-style iOS UI with chat, model picker, and settings.
+- Swipe-to-delete conversations with animated removal.
 - Streaming chat with SSE (`/v1/chat/completions`).
 - `<think>...</think>` parsing with collapsible reasoning UI.
 - Live compact thinking preview while generation is in progress.
@@ -28,7 +30,8 @@ LM Go is a SwiftUI iOS chat app for:
 
 ## Local MLX Status
 
-- `mlx-swift-lm` is pinned to revision `e33eba8513595bde535719c48fedcb10ade5af57` to support `qwen3_5` model type.
+- `mlx-swift` is pinned to revision `dcf5c6b` (includes C++17→C++20 fix from PR #357).
+- `mlx-swift-lm` is pinned to revision `6bb84aa` (latest, supports `qwen3_5` model type).
 - Hugging Face MLX discovery/add flow is intentionally restricted to `mlx-community/*` repos.
 - Default suggested repo is `mlx-community/Qwen3.5-4B-4bit`.
 - Local on-device generation runs through Apple MLX (`MLX`, `MLXLLM`, `MLXLMCommon`).
@@ -178,7 +181,7 @@ Guardrails:
 ## Troubleshooting
 
 - `Unsupported model type: qwen3_5`
-  - Ensure dependencies are resolved to the pinned `mlx-swift-lm` revision.
+  - Ensure dependencies are resolved to the pinned `mlx-swift-lm` revision (`6bb84aa`).
   - Clean build folder and rebuild.
 - Runtime models empty in Settings
   - Confirm LM Studio server is reachable and has runtime models.
@@ -191,6 +194,9 @@ Guardrails:
   - Try a smaller model.
   - Ensure network is reachable for first load.
   - Add Hugging Face token for gated/private repos.
+- C++17 extension warnings from mlx-swift
+  - The pinned `mlx-swift` revision includes the C++20 language standard fix. Run `xcodebuild -resolvePackageDependencies` to ensure the correct revision is checked out.
+  - If warnings persist, clean DerivedData and rebuild.
 - Metal compiler warnings in logs
   - Warnings from `mlx-swift` metal kernels (for example unused constants) are dependency compile warnings, not direct evidence of an app memory leak.
   - Use the `MLX Memory` panel to inspect `Active` vs `Cache`, then use `Clear Cache` when needed.

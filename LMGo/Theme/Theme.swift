@@ -1,78 +1,71 @@
 import SwiftUI
 
 enum LMTheme {
-    // MARK: - Colors
+    // MARK: - Colors — ChatGPT-inspired neutral dark palette
 
-    static let background = Color(hex: "0C0E13")
-    static let backgroundElevated = Color(hex: "131720")
-    static let surfacePrimary = Color(hex: "181C25")
-    static let surfaceSecondary = Color(hex: "222836")
-    static let surfaceTertiary = Color(hex: "2B3344")
+    static let background = Color(hex: "212121")
+    static let backgroundElevated = Color(hex: "171717")
+    static let surfacePrimary = Color(hex: "2F2F2F")
+    static let surfaceSecondary = Color(hex: "383838")
+    static let surfaceTertiary = Color(hex: "424242")
 
-    static let accent = Color(hex: "3B82FF")
-    static let accentLight = Color(hex: "75A9FF")
-    static let accentMuted = Color(hex: "3B82FF").opacity(0.24)
+    static let accent = Color(hex: "10A37F")
+    static let accentLight = Color(hex: "5DD9B3")
+    static let accentMuted = Color(hex: "10A37F").opacity(0.18)
 
-    static let textPrimary = Color.white
-    static let textSecondary = Color(hex: "CDD4E2")
-    static let textTertiary = Color(hex: "8E97AB")
+    static let textPrimary = Color(hex: "ECECEC")
+    static let textSecondary = Color(hex: "B4B4B4")
+    static let textTertiary = Color(hex: "707070")
 
-    static let border = Color.white.opacity(0.07)
-    static let borderLight = Color.white.opacity(0.16)
-    static let glassEdge = Color.white.opacity(0.2)
-    static let glassShadow = Color.black.opacity(0.42)
-    static let inputBackground = Color(hex: "1E2430")
+    static let border = Color.white.opacity(0.08)
+    static let borderLight = Color.white.opacity(0.14)
+    static let glassEdge = Color.white.opacity(0.12)
+    static let glassShadow = Color.black.opacity(0.45)
+    static let inputBackground = Color(hex: "2F2F2F")
 
-    static let success = Color(hex: "2ED48C")
-    static let error = Color(hex: "FF6F73")
-    static let warning = Color(hex: "FFC066")
+    static let success = Color(hex: "10A37F")
+    static let error = Color(hex: "EF4444")
+    static let warning = Color(hex: "F59E0B")
 
-    static let userBubble = Color(hex: "3B82FF").opacity(0.8)
-    static let assistantBubble = Color(hex: "1C222F").opacity(0.95)
+    static let userBubble = Color(hex: "10A37F").opacity(0.85)
+    static let assistantBubble = Color(hex: "2F2F2F").opacity(0.95)
 
     // MARK: - Gradients
 
     static let accentGradient = LinearGradient(
-        colors: [Color(hex: "3B82FF"), Color(hex: "5E68FF")],
+        colors: [Color(hex: "10A37F"), Color(hex: "0EA589")],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static let subtleGradient = LinearGradient(
-        colors: [Color(hex: "70A6FF").opacity(0.24), Color(hex: "6E73FF").opacity(0.1)],
+        colors: [Color(hex: "10A37F").opacity(0.15), Color(hex: "0EA589").opacity(0.05)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static let meshGlow = RadialGradient(
-        colors: [Color(hex: "4A88FF").opacity(0.28), Color.clear],
+        colors: [Color(hex: "10A37F").opacity(0.18), Color.clear],
         center: .center,
         startRadius: 0,
         endRadius: 260
     )
 
     static let backgroundGradient = LinearGradient(
-        colors: [Color(hex: "0A0C11"), Color(hex: "11151E"), Color(hex: "0B0E14")],
+        colors: [Color(hex: "1A1A1A"), Color(hex: "212121"), Color(hex: "1E1E1E")],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static var appBackground: some View {
         ZStack {
-            backgroundGradient
+            Color(hex: "212121")
 
             RadialGradient(
-                colors: [Color(hex: "3B82FF").opacity(0.2), .clear],
+                colors: [Color(hex: "10A37F").opacity(0.04), .clear],
                 center: .topTrailing,
                 startRadius: 30,
-                endRadius: 360
-            )
-
-            RadialGradient(
-                colors: [Color(hex: "5E68FF").opacity(0.14), .clear],
-                center: .bottomTrailing,
-                startRadius: 20,
-                endRadius: 340
+                endRadius: 400
             )
         }
     }
